@@ -1,0 +1,62 @@
+---
+title: "Lessons Learned: Cars Dataset"
+author: "Gerardo Parrello"
+---
+
+### Acquiring Data
+#### Load data
+```{r}
+library("readr")
+cars <- read.csv("./data/cars.csv")
+```
+
+#### Preprocess
+- Change attribute names.
+- Set data type to character for brand.
+```{r}
+names(cars) <- c("brand","speed","distance")
+cars$brand <- as.character(cars$brand)
+```
+
+### Creating Train and Test Sets
+#### Compute set sizes
+```{r}
+trainPct <- 0.8
+trainSize <- round(nrow(cars)*trainPct)
+testSize <- nrow(cars) - trainSize
+```
+We use `r trainPct*100`% of our data to train our model and the rest to test it. Our final set sizes are `r trainSize` and `r testSize` rows for training and testing, respectively.
+
+#### Build sets
+```{r}
+seed <- 8888
+set.seed(seed)
+trainIndex <- sample(seq_len(nrow(cars)), size=trainSize)
+```
+Setting `r seed` as seed, we random sample the whole dataset for `r trainSize` indexes.
+
+```{r}
+trainSet <- cars[trainIndex,]
+testSet <- cars[-trainIndex,]
+```
+We then filter the dataset with these indexes, building a new dataset with the indexes that match (trainSet) and another with the opposite, those that do not match (testSet).
+
+### Modeling
+#### Train Linear Model
+```{r}
+linear <- lm(distance~ speed, trainSet)
+```
+
+#### Apply Model to Test Set
+```{r}
+predictions <- predict(linear, testSet)
+```
+
+### Results
+#### Plot Results
+```{r}
+plot(testSet$speed, predictions, col="Blue", xlab="Speed", ylab="Distance", main="Predicted and Real Distances")
+points(testSet$speed, testSet$distance, col="Red")
+abline(linear, col="Blue")
+```
+

@@ -1,0 +1,63 @@
+---
+title: "Lessons Learned: Iris Dataset"
+author: "Gerardo Parrello"
+---
+
+### Acquiring Data
+#### Load data
+```{r}
+library("readr")
+IrisDataset <- read.csv("./data/iris.csv")
+```
+
+#### Find Info
+```{r}
+#attributes(IrisDataset)
+#summary(IrisDataset)
+#str(IrisDataset)
+#names(IrisDataset)
+#hist(IrisDataset$Species)
+#plot(IrisDataset$Sepal.Length)
+#qqnorm(IrisDataset)
+```
+
+#### Preprocess
+ - Set data type to numeric for species attribute.
+```{r}
+IrisDataset$Species <- as.numeric(IrisDataset$Species)
+```
+
+### Creating Train and Test Sets
+#### Compute set sizes
+```{r}
+trainPct <- 0.8
+trainSize <- round(nrow(IrisDataset) * trainPct)
+testSize <- nrow(IrisDataset) - trainSize
+```
+We use `r trainPct*100`% of our data to train our model and the rest to test it. Our final set sizes are `r trainSize` and `r testSize` rows for training and testing, respectively.
+
+
+```{r}
+seed <- 123
+set.seed(seed)
+training_indices <- sample(seq_len(nrow(IrisDataset)), size=trainSize)
+```
+Setting `r seed` as seed, we random sample the whole dataset for `r trainSize` indexes.
+
+```{r}
+trainSet <- IrisDataset[training_indices, ]
+testSet <- IrisDataset[-training_indices, ]
+```
+We then filter the dataset with these indexes, building a new dataset with the indexes that match (trainSet) and another with the opposite, those that do not match (testSet).
+
+#### Fit Linear Model
+```{r}
+LinearModel<- lm(Petal.Width~ Petal.Length, trainSet)
+# summary(LinearModel)
+```
+
+#### Apply Model to Predict
+```{r}
+prediction <- predict(LinearModel, testSet)
+prediction
+```

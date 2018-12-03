@@ -2,45 +2,58 @@
 title: "Lessons Learned: Iris Dataset"
 author: "Gerardo Parrello"
 ---
+### Load Libraries 
+```{r}
+library("readr")
+library("rbokeh")
+```
+
+### Set Parameters
+```{r}
+plot_scale = .9
+plot_width = 987 * plot_scale
+plot_height = 610 * plot_scale
+```
 
 ### Acquiring Data
 #### Load data
 ```{r}
-library("readr")
 IrisDataset <- read.csv("./data/iris.csv")
 ```
 
 #### Find Info
 ```{r}
-#attributes(IrisDataset)
-#summary(IrisDataset)
-#str(IrisDataset)
-#names(IrisDataset)
-#hist(IrisDataset$Species)
-#plot(IrisDataset$Sepal.Length)
-#qqnorm(IrisDataset)
+summary(IrisDataset)
+str(IrisDataset)
 ```
 
-#### Preprocess
- - Set data type to numeric for species attribute.
+#### Show Data
 ```{r}
-IrisDataset$Species <- as.numeric(IrisDataset$Species)
+figure(width = plot_width, height = plot_height, xlab="Petal Length", ylab="Petal Width", title="Iris dataset") %>%
+  ly_points(Petal.Length, Petal.Width, data = IrisDataset, hover = c(Species, Petal.Length, Petal.Width), color=Species)
+figure(width = plot_width, height = plot_height, xlab="Petal Width", title="Petal width histogram") %>%
+  ly_hist(IrisDataset$Petal.Width, freq=FALSE) %>% # don't care about absolute frequency, just the shape
+  ly_density(IrisDataset$Petal.Width)
+figure(width = plot_width, height = plot_height, xlab="Petal Length", title="Petal height histogram") %>%
+  ly_hist(IrisDataset$Petal.Length, freq=FALSE) %>% # don't care about absolute frequency, just the shape
+  ly_density(IrisDataset$Petal.Length)
 ```
 
 ### Creating Train and Test Sets
-#### Compute set sizes
+#### Compute Set Sizes
 ```{r}
 trainPct <- 0.8
-trainSize <- round(nrow(IrisDataset) * trainPct)
-testSize <- nrow(IrisDataset) - trainSize
+datasetSize <- nrow(IrisDataset)
+trainSize <- round(datasetSize * trainPct)
+testSize <- datasetSize - trainSize
 ```
-We use `r trainPct*100`% of our data to train our model and the rest to test it. Our final set sizes are `r trainSize` and `r testSize` rows for training and testing, respectively.
+We use `r trainPct*100`% of our data to train our model and the rest to test it. Since our dataset is `r datasetSize` rows long, our final set sizes are `r trainSize` and `r testSize` rows for training and testing, respectively.
 
-
+#### Build Sets
 ```{r}
 seed <- 123
 set.seed(seed)
-training_indices <- sample(seq_len(nrow(IrisDataset)), size=trainSize)
+training_indices <- sample(seq_len(datasetSize), size=trainSize)
 ```
 Setting `r seed` as seed, we random sample the whole dataset for `r trainSize` indexes.
 
@@ -50,14 +63,44 @@ testSet <- IrisDataset[-training_indices, ]
 ```
 We then filter the dataset with these indexes, building a new dataset with the indexes that match (trainSet) and another with the opposite, those that do not match (testSet).
 
+### Modeling
 #### Fit Linear Model
+We create a model of the type $y=mx+b$.
 ```{r}
-LinearModel<- lm(Petal.Width~ Petal.Length, trainSet)
-# summary(LinearModel)
+LinearModel <- lm(Petal.Width~ Petal.Length, trainSet)
+summary(LinearModel)
 ```
 
-#### Apply Model to Predict
+#### Apply Model to Train Set
 ```{r}
-prediction <- predict(LinearModel, testSet)
-prediction
+trainSet$prediction <- predict(LinearModel, trainSet)
+trainSet$error <- scale(trainSet$prediction - trainSet$Petal.Width)
 ```
+
+#### Plot Errors
+```{r}
+figure(width = plot_width, height = plot_height, xlab="Petal Length", ylab="Error", title="Errors on train set prediction") %>%
+  ly_points(Petal.Length, error, data = trainSet, hover = c(Petal.Length, error), color="purple", glyph="triangle")
+```
+
+### Results
+#### Apply Model to Test Set
+```{r}
+testSet$prediction <- predict(LinearModel, testSet)
+testSet$error <- scale(testSet$prediction - testSet$Petal.Width) # z-transform normalization of errors
+```
+
+#### Plot Results
+```{r}
+figure(width = plot_width, height = plot_height, xlab="Petal Length", ylab="Petal Width", title="Applied model on test set") %>%
+  ly_points(Petal.Length, Petal.Width, data = testSet, hover = c(Species, Petal.Length, Petal.Width), color=Species) %>%
+  ly_points(Petal.Length, prediction, data = testSet, hover = c(Petal.Length, prediction), color="red", glyph="square") %>%
+  ly_abline(LinearModel, color="red", legend="Linear Model")
+```
+
+#### Plot Errors
+```{r}
+figure(width = plot_width, height = plot_height, xlab="Petal Length", ylab="Error", title="Errors on test set prediction") %>%
+  ly_points(Petal.Length, error, data = testSet, hover = c(Petal.Length, error), color="purple", glyph="triangle")
+```
+

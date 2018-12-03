@@ -1,6 +1,7 @@
 ---
-title: "Lessons Learned: Iris Dataset"
+title: 'Lessons Learned: Iris Dataset'
 author: "Gerardo Parrello"
+output: pdf_document
 ---
 ### Load Libraries 
 ```{r}
@@ -29,15 +30,76 @@ str(IrisDataset)
 
 #### Show Data
 ```{r}
-figure(width = plot_width, height = plot_height, xlab="Petal Length", ylab="Petal Width", title="Iris dataset") %>%
-  ly_points(Petal.Length, Petal.Width, data = IrisDataset, hover = c(Species, Petal.Length, Petal.Width), color=Species)
-figure(width = plot_width, height = plot_height, xlab="Petal Width", title="Petal width histogram") %>%
-  ly_hist(IrisDataset$Petal.Width, freq=FALSE) %>% # don't care about absolute frequency, just the shape
+figure(width = plot_width,
+       height = plot_height,
+       xlab="Sepal Length",
+       ylab="Sepal Width",
+       title="Iris dataset") %>%
+  ly_points(Sepal.Length,
+            Sepal.Width,
+            data = IrisDataset,
+            hover = c(Species, Sepal.Length, Sepal.Width),
+            color=Species)
+```
+There seems to be no pattern concerning sepal length and width.
+
+But there is a relation for petal length and width.
+```{r}
+figure(width = plot_width,
+       height = plot_height,
+       xlab="Petal Length",
+       ylab="Petal Width",
+       title="Iris dataset") %>%
+  ly_points(Petal.Length,
+            Petal.Width,
+            data = IrisDataset,
+            hover = c(Species, Petal.Length, Petal.Width),
+            color=Species)
+figure(width = plot_width,
+       height = plot_height,
+       xlab="Petal Width",
+       title="Petal width histogram") %>%
+  ly_hist(IrisDataset$Petal.Width, freq=FALSE) %>%
+  # don't care about absolute frequency, just the shape
   ly_density(IrisDataset$Petal.Width)
-figure(width = plot_width, height = plot_height, xlab="Petal Length", title="Petal height histogram") %>%
-  ly_hist(IrisDataset$Petal.Length, freq=FALSE) %>% # don't care about absolute frequency, just the shape
+figure(width = plot_width,
+       height = plot_height,
+       xlab="Petal Length",
+       title="Petal height histogram") %>%
+  ly_hist(IrisDataset$Petal.Length, freq=FALSE) %>%
+  # don't care about absolute frequency, just the shape
   ly_density(IrisDataset$Petal.Length)
 ```
+
+The following code was adapted from [https://hafen.github.io/rbokeh](https://hafen.github.io/rbokeh).
+```{r}
+tools <- c("pan", "wheel_zoom", "box_zoom", "box_select", "reset")
+attr_names <- names(IrisDataset)[2:5]
+# Select attributes 2 to 5
+nms <- expand.grid(attr_names, rev(attr_names), stringsAsFactors = FALSE)
+# combinatoric function
+splom_list <- vector("list", 16)
+# 16 length vector because we have 4 attributes in matrix, 4x4 plots
+for(ii in seq_len(nrow(nms))) {
+  splom_list[[ii]] <- figure(width = plot_width/4,
+                             height = plot_width/4,
+                             tools = tools,
+                             xlab = nms$Var1[ii],
+                             ylab = nms$Var2[ii]) %>%
+    ly_points(nms$Var1[ii],
+              nms$Var2[ii],
+              data = IrisDataset,
+              color = Species,
+              size = 5,
+              legend = FALSE)
+}
+grid_plot(splom_list, ncol = 4,
+          same_axes = TRUE,
+          link_data = TRUE,
+          height = plot_width,
+          width = plot_width)
+```
+
 
 ### Creating Train and Test Sets
 #### Compute Set Sizes
@@ -79,28 +141,60 @@ trainSet$error <- scale(trainSet$prediction - trainSet$Petal.Width)
 
 #### Plot Errors
 ```{r}
-figure(width = plot_width, height = plot_height, xlab="Petal Length", ylab="Error", title="Errors on train set prediction") %>%
-  ly_points(Petal.Length, error, data = trainSet, hover = c(Petal.Length, error), color="purple", glyph="triangle")
+figure(width = plot_width,
+       height = plot_height,
+       xlab="Petal Length",
+       ylab="Error",
+       title="Errors on train set prediction") %>%
+  ly_points(Petal.Length,
+            error,
+            data = trainSet,
+            hover = c(Petal.Length, error),
+            color="purple",
+            glyph="triangle")
 ```
 
 ### Results
 #### Apply Model to Test Set
 ```{r}
 testSet$prediction <- predict(LinearModel, testSet)
-testSet$error <- scale(testSet$prediction - testSet$Petal.Width) # z-transform normalization of errors
+testSet$error <- scale(
+  testSet$prediction - testSet$Petal.Width
+  ) # z-transform normalization of errors
 ```
 
 #### Plot Results
 ```{r}
-figure(width = plot_width, height = plot_height, xlab="Petal Length", ylab="Petal Width", title="Applied model on test set") %>%
-  ly_points(Petal.Length, Petal.Width, data = testSet, hover = c(Species, Petal.Length, Petal.Width), color=Species) %>%
-  ly_points(Petal.Length, prediction, data = testSet, hover = c(Petal.Length, prediction), color="red", glyph="square") %>%
+figure(width = plot_width,
+       height = plot_height,
+       xlab="Petal Length",
+       ylab="Petal Width",
+       title="Applied model on test set") %>%
+  ly_points(Petal.Length,
+            Petal.Width,
+            data = testSet,
+            hover = c(Species, Petal.Length, Petal.Width),
+            color=Species) %>%
+  ly_points(Petal.Length,
+            prediction,
+            data = testSet,
+            hover = c(Petal.Length, prediction),
+            color="red",
+            glyph="square") %>%
   ly_abline(LinearModel, color="red", legend="Linear Model")
 ```
 
 #### Plot Errors
 ```{r}
-figure(width = plot_width, height = plot_height, xlab="Petal Length", ylab="Error", title="Errors on test set prediction") %>%
-  ly_points(Petal.Length, error, data = testSet, hover = c(Petal.Length, error), color="purple", glyph="triangle")
+figure(width = plot_width,
+       height = plot_height,
+       xlab="Petal Length",
+       ylab="Error",
+       title="Errors on test set prediction") %>%
+  ly_points(Petal.Length, error,
+            data = testSet,
+            hover = c(Petal.Length, error),
+            color="purple",
+            glyph="triangle")
 ```
 

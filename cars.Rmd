@@ -2,6 +2,7 @@
 title: 'Lessons Learned: Cars Dataset'
 author: "Gerardo Parrello"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
 ---
@@ -42,24 +43,48 @@ cars$brand <- as.character(cars$brand)
 
 #### Show Data
 ```{r}
-figure(width = plot_width, height = plot_height, title="Cars dataset") %>%
-  ly_points(speed, distance, data = cars, hover = c(brand, speed, distance))
+figure(width = plot_width,
+       height = plot_height,
+       title="Cars dataset") %>%
+  ly_points(speed,
+            distance,
+            data = cars,
+            hover = c(brand, speed, distance))
 bins <- round(nrow(cars)/5)
-figure(width = plot_width, height = plot_height, xlab="Speed", "Speed histogram") %>%
-  ly_hist(cars$speed, freq=FALSE, breaks=bins) %>% # don't care about absolute frequency, just the shape
+figure(width = plot_width,
+       height = plot_height,
+       xlab="Speed",
+       title="Speed histogram") %>%
+  ly_hist(cars$speed, freq=FALSE, breaks=bins) %>%
+  # don't care about absolute frequency, just the shape
   ly_density(cars$speed)
-figure(width = plot_width, height = plot_height, xlab="Distance", "Distance histogram") %>%
-  ly_hist(cars$distance, freq=FALSE, breaks=bins) %>% # don't care about absolute frequency, just the shape
+figure(width = plot_width,
+       height = plot_height,
+       lab="Distance",
+       title="Distance histogram") %>%
+  ly_hist(cars$distance, freq=FALSE, breaks=bins) %>%
+  # don't care about absolute frequency, just the shape
   ly_density(cars$distance)
 ```
 
 #### Remove Outliers
 ```{r}
 cars_outliers <- cars[which(cars$distance > 100), ]
-cars <- cars[which(cars$distance <= 100), ] # the comma is important to select all columns from the dataframe
-figure(width = plot_width, height = plot_height, title="Outliers") %>%
-  ly_points(speed, distance, data = cars, hover = c(brand, speed, distance), legend="Original") %>%
-  ly_points(speed, distance, data = cars_outliers, hover = c(brand, speed, distance), color="red", legend="Outlier")
+cars <- cars[which(cars$distance <= 100), ]
+# the comma is important to select all columns from the dataframe
+figure(width = plot_width,
+       height = plot_height,
+       title="Outliers") %>%
+  ly_points(speed, distance,
+            data = cars,
+            hover = c(brand, speed, distance),
+            legend="Original") %>%
+  ly_points(speed,
+            distance,
+            data = cars_outliers,
+            hover = c(brand, speed, distance),
+            color="red",
+            legend="Outlier")
 ```
 
 
@@ -97,33 +122,59 @@ summary(linear)
 #### Apply Model to Train Set
 ```{r}
 trainSet$pred_dist <- predict(linear, trainSet)
-trainSet$error <- scale(trainSet$pred_dist - trainSet$distance) # calculate normalized error
+trainSet$error <- scale(
+  trainSet$pred_dist - trainSet$distance
+  ) # calculate normalized error
 ```
 
 #### Plot Errors
 ```{r}
-figure(width = plot_width, height = plot_height, title="Errors on train set prediction") %>%
-  ly_points(speed, error, data = trainSet, hover = c(speed, error), color="green", glyph="triangle")
+figure(width = plot_width,
+       height = plot_height,
+       title="Errors on train set prediction") %>%
+  ly_points(speed,
+            error,
+            data = trainSet,
+            hover = c(speed, error),
+            color="green",
+            glyph="triangle")
 ```
 
 ### Results
 #### Apply Model to Test Set
 ```{r}
 testSet$pred_dist <- predict(linear, testSet)
-testSet$error <- scale(testSet$pred_dist - testSet$distance) # calculate normalized error
+testSet$error <- scale(
+  testSet$pred_dist - testSet$distance
+  ) # calculate normalized error
 ```
 
 #### Plot Results
 ```{r}
-figure(width = plot_width, height = plot_height, title="Applied model on test set") %>%
-  ly_points(speed, distance, data = testSet, hover = c(brand, speed, distance)) %>%
-  ly_points(speed, pred_dist, data = testSet, hover = c(brand, speed, pred_dist), color="red") %>%
+figure(width = plot_width,
+       height = plot_height,
+       title="Applied model on test set") %>%
+  ly_points(speed,
+            distance,
+            data = testSet,
+            hover = c(brand, speed, distance)) %>%
+  ly_points(speed,
+            pred_dist,
+            data = testSet,
+            hover = c(brand, speed, pred_dist),
+            color="red") %>%
   ly_abline(linear, color="red", legend="Linear Model")
 ```
 
 #### Plot Errors
 ```{r}
-figure(width = plot_width, height = plot_height, title="Errors on test set prediction") %>%
-  ly_points(speed, error, data = testSet, hover = c(speed, error), color="green", glyph="triangle")
+figure(width = plot_width,
+       height = plot_height,
+       title="Errors on test set prediction") %>%
+  ly_points(speed,
+            error,
+            data = testSet,
+            hover = c(speed, error),
+            color="green", glyph="triangle")
 ```
 
